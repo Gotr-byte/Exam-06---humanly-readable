@@ -22,7 +22,7 @@ int socket_fd = 0, connection_fd = 0, maximum_fd = 0, idNext = 0;
 /*The fd_set variable type used in select.*/
 fd_set read_fds, write_fds, active_fds;
 /*Sockaddr in is used in the bind socket.*/
-struct sockaddr_in servaddr, cli;
+struct sockaddr_in server_address, client_address;
 char readbuff[696969], writebuff[696969];
 
 void error(char *msg)
@@ -53,17 +53,17 @@ int main(int argc, char **argv)
 	if (socket_fd == -1)
 		error(NULL);
     maximum_fd = socket_fd;
-	bzero(&servaddr, sizeof(servaddr)); 
+	bzero(&server_address, sizeof(server_address)); 
 	bzero(&clients, sizeof(clients));
 	bzero(&writebuff, sizeof(writebuff));
 	bzero(&readbuff, sizeof(readbuff));
 	// assign IP, PORT
     int port = atoi(argv[1]);
-	servaddr.sin_family = AF_INET; 
-	servaddr.sin_addr.s_addr = htonl(2130706433); //127.0.0.1
-	servaddr.sin_port = htons(port); 
+	server_address.sin_family = AF_INET; 
+	server_address.sin_addr.s_addr = htonl(2130706433); //127.0.0.1
+	server_address.sin_port = htons(port); 
 	// Binding newly created socket to given IP and verification 
-	if ((bind(socket_fd, (const struct sockaddr *)&servaddr, sizeof(servaddr))) != 0)
+	if ((bind(socket_fd, (const struct sockaddr *)&server_address, sizeof(server_address))) != 0)
 		error(NULL);
 	if (listen(socket_fd, 128) != 0)
 		error(NULL);
@@ -79,7 +79,7 @@ int main(int argc, char **argv)
 		{
 			if (FD_ISSET(fdId, &read_fds) && fdId == socket_fd)
 			{
-				connection_fd = accept(socket_fd, (struct sockaddr *)&cli, &len);
+				connection_fd = accept(socket_fd, (struct sockaddr *)&client_address, &len);
 				if (connection_fd < 0)
 					continue;
 				maximum_fd = connection_fd > maximum_fd ? connection_fd : maximum_fd;
