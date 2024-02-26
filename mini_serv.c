@@ -23,8 +23,10 @@ int socket_fd = 0, connection_fd = 0, maximum_fd = 0, idNext = 0;
 fd_set read_fds, write_fds, active_fds;
 /*Sockaddr in is used in the bind socket.*/
 struct sockaddr_in server_address, client_address;
-char readbuff[696969], writebuff[696969];
+/*Arrays to store the bytes received and the bytes to be sent.*/
+char read_buffer[696969], write_buffer[696969];
 
+/*Helper function to display error messages.*/
 void error(char *msg)
 {
 	if (msg)
@@ -34,12 +36,13 @@ void error(char *msg)
     exit(1);
 }
 
-void	sendAll(int connection_fd)
+/*Send the message to every client.*/
+void	send_all(int connection_fd)
 {
-	for (int fdId = 0; fdId <= maximum_fd; fdId++)
+	for (int fd_id = 0; fd_id <= maximum_fd; fd_id++)
 	{
-		if (FD_ISSET(fdId, &write_fds) && fdId != connection_fd)
-			send(fdId, writebuff, strlen(writebuff), 0);
+		if (FD_ISSET(fd_id, &write_fds) && fd_id != connection_fd)
+			send(fd_id, write_buffer, strlen(write_buffer), 0);
 	}
 }
 
@@ -55,8 +58,8 @@ int main(int argc, char **argv)
     maximum_fd = socket_fd;
 	bzero(&server_address, sizeof(server_address)); 
 	bzero(&clients, sizeof(clients));
-	bzero(&writebuff, sizeof(writebuff));
-	bzero(&readbuff, sizeof(readbuff));
+	bzero(&write_buffer, sizeof(write_buffer));
+	bzero(&read_buffer, sizeof(read_buffer));
 	// assign IP, PORT
     int port = atoi(argv[1]);
 	server_address.sin_family = AF_INET; 
@@ -75,48 +78,48 @@ int main(int argc, char **argv)
 		read_fds = write_fds = active_fds;
 		if (select(maximum_fd + 1, &read_fds, &write_fds, NULL, NULL) < 0)
 			continue;
-		for (int fdId = 0; fdId <= maximum_fd; fdId++)
+		for (int fd_id = 0; fd_id <= maximum_fd; fd_id++)
 		{
-			if (FD_ISSET(fdId, &read_fds) && fdId == socket_fd)
+			if (FD_ISSET(fd_id, &read_fds) && fd_id == socket_fd)
 			{
 				connection_fd = accept(socket_fd, (struct sockaddr *)&client_address, &len);
 				if (connection_fd < 0)
 					continue;
 				maximum_fd = connection_fd > maximum_fd ? connection_fd : maximum_fd;
-				sprintf(writebuff, "server: client %d just arrived\n", idNext);
-				sendAll(connection_fd);
-				bzero(&writebuff, strlen(writebuff));
+				sprintf(write_buffer, "server: client %d just arrived\n", idNext);
+				send_all(connection_fd);
+				bzero(&write_buffer, strlen(write_buffer));
 				clients[connection_fd].id = idNext++;
 				FD_SET(connection_fd, &active_fds);
 			}
-			else if (FD_ISSET(fdId, &read_fds))
+			else if (FD_ISSET(fd_id, &read_fds))
 			{
-				int readCount = recv(fdId, &readbuff, sizeof(readbuff), 0);
+				int readCount = recv(fd_id, &read_buffer, sizeof(read_buffer), 0);
 				if (readCount == 0)
 				{
-					FD_CLR(fdId, &active_fds);
-					sprintf(writebuff, "server: client %d just left\n", clients[fdId].id);
-					sendAll(fdId);
-					bzero(&writebuff, strlen(writebuff));
-					bzero(&clients[fdId], sizeof(t_client));
-					close(fdId);
+					FD_CLR(fd_id, &active_fds);
+					sprintf(write_buffer, "server: client %d just left\n", clients[fd_id].id);
+					send_all(fd_id);
+					bzero(&write_buffer, strlen(write_buffer));
+					bzero(&clients[fd_id], sizeof(t_client));
+					close(fd_id);
 				}
 				else
 				{
-					for (int i = 0, j = strlen(clients[fdId].msg); readbuff[i]; i++, j++)
+					for (int i = 0, j = strlen(clients[fd_id].msg); read_buffer[i]; i++, j++)
 					{
-						clients[fdId].msg[j] = readbuff[i];
-						if (readbuff[i] == '\n')
+						clients[fd_id].msg[j] = read_buffer[i];
+						if (read_buffer[i] == '\n')
 						{
-							clients[fdId].msg[j] = '\0';
-							sprintf(writebuff, "client %d: %s\n", clients[fdId].id, clients[fdId].msg);
-							sendAll(fdId);
-							bzero(writebuff, strlen(writebuff));
-							bzero(&clients[fdId].msg, strlen(clients[fdId].msg));
+							clients[fd_id].msg[j] = '\0';
+							sprintf(write_buffer, "client %d: %s\n", clients[fd_id].id, clients[fd_id].msg);
+							send_all(fd_id);
+							bzero(write_buffer, strlen(write_buffer));
+							bzero(&clients[fd_id].msg, strlen(clients[fd_id].msg));
 							j = -1;
 						}
 					}
-					bzero(readbuff, sizeof(readbuff));
+					bzero(read_buffer, sizeof(read_buffer));
 				}
 			}
 		}
