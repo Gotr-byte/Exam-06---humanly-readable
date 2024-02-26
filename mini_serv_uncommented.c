@@ -7,39 +7,18 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-/*
-The struct contains a client id and a char array of the message.
-*/
 typedef struct s_client
 {
     int id;
     char msg[696969];
 }   t_client;
 
-/*
-A couple of global variables, apparently there is a max of 128 clients.
-*/
 t_client clients[128];
-/*
-Integer values of file descriptors and possibly the id-s of next client.
-*/
 int socket_fd = 0, connection_fd = 0, maximum_fd = 0, idNext = 0;
-/*
-The fd_set variable type used in select.
-*/
 fd_set read_fds, write_fds, active_fds;
-/*
-Sockaddr in is used in the bind socket.
-*/
 struct sockaddr_in server_address, client_address;
-/*
-Arrays to store the bytes received and the bytes to be sent.
-*/
 char read_buffer[696969], write_buffer[696969];
 
-/*
-Helper function to display error messages.
-*/
 void error(char *msg)
 {
 	if (msg)
@@ -49,9 +28,6 @@ void error(char *msg)
     exit(1);
 }
 
-/*
-Send the message to every client.
-*/
 void	send_all(int connection_fd)
 {
 	for (int fd_id = 0; fd_id <= maximum_fd; fd_id++)
@@ -61,23 +37,11 @@ void	send_all(int connection_fd)
 	}
 }
 
-/*
-Argv is the port number, argc is used for error checking.
-*/
 int main(int argc, char **argv)
 {
-	/*
-	Used in accept connection.
-	*/
 	socklen_t len;
-	/*
-	Test for number of arguments, if it's different than two. Command and port number print error message.
-	*/
     if (argc != 2)
         error("Wrong number of arguments\n");
-	/*
-	socket create and verification
-	*/
 	socket_fd = socket(AF_INET, SOCK_STREAM, 0); 
 	if (socket_fd == -1)
 		error(NULL);
@@ -86,16 +50,10 @@ int main(int argc, char **argv)
 	bzero(&clients, sizeof(clients));
 	bzero(&write_buffer, sizeof(write_buffer));
 	bzero(&read_buffer, sizeof(read_buffer));
-	/*
-	assign IP, PORT
-	*/
     int port = atoi(argv[1]);
 	server_address.sin_family = AF_INET; 
 	server_address.sin_addr.s_addr = htonl(2130706433); //127.0.0.1
 	server_address.sin_port = htons(port); 
-	/*
-	Binding newly created socket to given IP and verification.
-	*/ 
 	if ((bind(socket_fd, (const struct sockaddr *)&server_address, sizeof(server_address))) != 0)
 		error(NULL);
 	if (listen(socket_fd, 128) != 0)
