@@ -1,7 +1,18 @@
 # Exam-06---humanly-readable
-<<<<<<< HEAD
 
-Check the Webserver notes.
+This is a refactor of a working exam application.
+
+To run:
+
+./executable <port_number>
+
+You can test it using netcat on a seperate terminal:
+
+nc localhost <port_number>
+
+This is a reccomended resource to look up 
+
+Below is the assignment:
 
 Assignment name  : mini_serv
 Expected files   : mini_serv.c
@@ -48,5 +59,3 @@ Evaluation can be a bit longer than usual...
 Hint: you can use nc to test your program
 Hint: you should use nc to test your program
 Hint: To test you can use fcntl(fd, F_SETFL, O_NONBLOCK) but use select and NEVER check EAGAIN (man 2 send)
-=======
->>>>>>> 96a9f9fd127add3d05e2268887aa3656c0c9b9a5
